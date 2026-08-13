@@ -11,10 +11,12 @@
 using namespace std;
 using ll = long long;
 
+// 辺を表現する構造体
 struct Edge {
     ll to;
 };
 
+// 強連結成分分解を管理する構造体
 struct SCC {
     ll n;
     vector<vector<Edge>> g;
@@ -26,37 +28,44 @@ struct SCC {
     vector<ll> order;
     vector<bool> used;
 
+    // コンストラクタ
     SCC(ll _n) : n(_n), g(_n), rev_g(_n), comp(_n, -1), used(_n, false) {}
 
-    // 辺を追加 (from -> to)
+    // グラフに有向辺を追加する (from -> to)
     void add_edge(ll from, ll to) {
         g[from].push_back({to});
         rev_g[to].push_back({from});
     }
 
-    // 1回目のDFS：帰りがけ順に頂点を記録
+    // 1回目のDFS（帰りがけ順を記録）
     void dfs(ll v) {
         used[v] = true;
         for (auto e : g[v]) {
-            if (!used[e.to]) dfs(e.to);
+            if (!used[e.to]) {
+                dfs(e.to);
+            }
         }
         order.push_back(v);
     }
 
-    // 2回目のDFS：逆辺を辿って強連結成分を構築
+    // 2回目のDFS（逆辺を辿って強連結成分を構築）
     void rdfs(ll v, ll k) {
         used[v] = true;
         comp[v] = k;
         groups[k].push_back(v);
         for (auto e : rev_g[v]) {
-            if (!used[e.to]) rdfs(e.to, k);
+            if (!used[e.to]) {
+                rdfs(e.to, k);
+            }
         }
     }
 
-    // SCCを実行するメイン処理
+    // 強連結成分分解を実行する
     void build() {
         for (ll i = 0; i < n; i++) {
-            if (!used[i]) dfs(i);
+            if (!used[i]) {
+                dfs(i);
+            }
         }
         
         fill(used.begin(), used.end(), false);
@@ -71,12 +80,12 @@ struct SCC {
         }
     }
 
-    // 強連結成分数（グループ数）を返す
+    // 強連結成分の総数（グループ数）を返す
     ll size() {
         return groups.size();
     }
 
-    // 指定したグループ k に含まれる頂点リストを返す
+    // 指定したグループIDに含まれる頂点リストを返す
     vector<ll> get_group(ll k) {
         return groups[k];
     }
@@ -86,12 +95,12 @@ struct SCC {
         return groups;
     }
 
-    // 元の頂点 v が属するグループIDを返す
+    // 頂点 v が属する強連結成分のグループIDを返す
     ll get_id(ll v) {
         return comp[v];
     }
 
-    // 縮約後のDAG（隣接リスト）を取得する
+    // 縮約後のDAG（自己ループや多重辺を除去した隣接リスト）を取得する
     vector<vector<Edge>> get_dag() {
         ll k = groups.size();
         vector<vector<Edge>> dag(k);
