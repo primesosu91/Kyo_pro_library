@@ -11,8 +11,9 @@
 using namespace std;
 using ll = long long;
 
-struct Mod_CombinationArbitrary {
+struct ModCombinationArbitrary {
 private:
+    // 素数冪ごとの情報を保持する補助構造体
     struct PrimeInfo {
         ll p;
         ll pe;
@@ -26,7 +27,11 @@ private:
 
     // 拡張ユークリッドの互除法
     ll extgcd(ll a, ll b, ll &x, ll &y) const {
-        if (b == 0) { x = 1; y = 0; return a; }
+        if (b == 0) {
+            x = 1;
+            y = 0;
+            return a;
+        }
         ll x1, y1;
         ll d = extgcd(b, a % b, x1, y1);
         x = y1;
@@ -87,7 +92,9 @@ private:
         if (cnt >= e) return 0;
         
         ll p_pow = 1;
-        for (ll i = 0; i < cnt; i++) p_pow *= p;
+        for (ll i = 0; i < cnt; i++) {
+            p_pow *= p;
+        }
         
         ll res = num * inv(den, pe) % pe;
         res = res * p_pow % pe;
@@ -108,7 +115,7 @@ private:
 
 public:
     // コンストラクタ (任意の Mod を指定)
-    Mod_CombinationArbitrary(ll m) : mod(m) {
+    ModCombinationArbitrary(ll m) : mod(m) {
         ll temp = m;
         for (ll i = 2; i * i <= temp; i++) {
             if (temp % i == 0) {
