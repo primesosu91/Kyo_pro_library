@@ -23,7 +23,7 @@
 using namespace std;
 using ll = long long;
 
-// ユーティリティ関数（最大公約数）
+// 最大公約数を求めるユーティリティ関数
 ll gcd(ll a, ll b) {
     while (b) {
         a %= b;
@@ -32,7 +32,7 @@ ll gcd(ll a, ll b) {
     return a;
 }
 
-// ユーティリティ関数（オーバーフロー対策済みの繰り返し二乗法）
+// 繰り返し二乗法（__int128_tを用いてオーバーフローを防止）
 ll mod_pow(ll a, ll n, ll mod) {
     ll res = 1;
     a %= mod;
@@ -44,12 +44,12 @@ ll mod_pow(ll a, ll n, ll mod) {
     return res;
 }
 
-// 事前構築テーブルによる各種素数・数論クエリ処理（小〜中規模向け O(N log log N) 構築）
+// 事前構築テーブルを用いた素数・数論クエリ処理（小〜中規模のクエリ向け）
 struct PrimeTable {
     vector<ll> min_factor;
     vector<ll> primes;
 
-    // Nまでの篩を構築（線形篩により O(N) に最適化）
+    // Nまでの篩を線形篩(O(N))により構築
     PrimeTable(ll n) {
         min_factor.assign(n + 1, 0);
         for (ll i = 2; i <= n; i++) {
@@ -64,23 +64,23 @@ struct PrimeTable {
         }
     }
 
-    // xが素数か判定 O(1)
+    // xが素数か判定 (O(1))
     bool is_prime(ll x) const {
         if (x < 2) return false;
         return min_factor[x] == x;
     }
 
-    // N以下の素数リスト取得
+    // 構築した範囲内の素数リストを取得
     vector<ll> get_primes() const {
         return primes;
     }
 
-    // x以下の素数の個数を取得 O(log(素数の数))
+    // x以下の素数の個数を取得 (O(log(素数の数)))
     ll get_prime_count(ll x) const {
         return upper_bound(primes.begin(), primes.end(), x) - primes.begin();
     }
 
-    // 高速素因数分解 O(log x)
+    // 高速素因数分解 (O(log x))
     vector<pair<ll, ll>> get_factors(ll x) const {
         vector<pair<ll, ll>> res;
         while (x > 1) {
@@ -95,7 +95,7 @@ struct PrimeTable {
         return res;
     }
 
-    // 約数リスト取得（昇順）
+    // 約数リストを昇順で取得
     vector<ll> get_divisors(ll x) const {
         auto factors = get_factors(x);
         vector<ll> res = {1};
@@ -115,7 +115,7 @@ struct PrimeTable {
         return res;
     }
 
-    // オイラーのφ関数 O(log x)
+    // オイラーのφ関数 (O(log x))
     ll get_euler(ll x) const {
         auto factors = get_factors(x);
         ll res = x;
@@ -125,7 +125,7 @@ struct PrimeTable {
         return res;
     }
 
-    // gがmod pの原始根か判定（pは素数） O(log(p-1) + 種類数 * log(p))
+    // gが法pの原始根か判定（pは素数）
     bool is_primitive_root(ll g, ll p) const {
         if (p == 2) return g == 1;
         if (g % p == 0) return false;
@@ -136,7 +136,7 @@ struct PrimeTable {
         return true;
     }
 
-    // mod pの最小の原始根を取得（pは素数）
+    // 法pの最小の原始根を取得（pは素数）
     ll get_primitive_root(ll p) const {
         if (p == 2) return 1;
         for (ll g = 2; g < p; g++) {
@@ -146,7 +146,7 @@ struct PrimeTable {
     }
 };
 
-// 単一の数に対する素数判定（Miller-Rabin 法 O(log n)）
+// 単一の数に対する素数判定（Miller-Rabin法: O(log n)）
 bool is_prime(ll n) {
     if (n <= 1) return false;
     if (n == 2 || n == 3 || n == 5) return true;
@@ -169,7 +169,7 @@ bool is_prime(ll n) {
     return true;
 }
 
-// 単一の数に対する素因数分解内部処理（Pollard's rho 法）
+// 単一の数に対する素因数分解の内部処理（Pollard's rho法）
 ll pollard_rho(ll n) {
     if (n % 2 == 0) return 2;
     if (is_prime(n)) return n;
@@ -185,7 +185,7 @@ ll pollard_rho(ll n) {
     }
 }
 
-// 内部再帰用
+// 素因数分解の再帰呼び出し部分
 void factorize_impl(ll n, vector<ll>& res) {
     if (n <= 1) return;
     if (is_prime(n)) {
@@ -197,7 +197,7 @@ void factorize_impl(ll n, vector<ll>& res) {
     factorize_impl(n / p, res);
 }
 
-// 単一の数に対する高速素因数分解 O(n^(1/4))
+// 単一の数に対する高速素因数分解 (O(n^(1/4)))
 vector<pair<ll, ll>> get_factors(ll n) {
     vector<ll> primes;
     factorize_impl(n, primes);
@@ -233,7 +233,7 @@ vector<ll> get_divisors(ll n) {
     return res;
 }
 
-// 単一の数に対するオイラーのφ関数 O(n^(1/4))
+// 単一の数に対するオイラーのφ関数 (O(n^(1/4)))
 ll get_euler(ll n) {
     auto factors = get_factors(n);
     ll res = n;
@@ -263,7 +263,7 @@ ll get_primitive_root(ll p) {
     return -1;
 }
 
-// N以下の素数の個数を取得 (Lucy Hedgehog アルゴリズム O(n^(3/4)))
+// N以下の素数の個数を取得（Lucy Hedgehog アルゴリズム: O(n^(3/4))）
 ll get_prime_count(ll n) {
     if (n <= 1) return 0;
     ll sq = sqrt(n);
@@ -279,11 +279,8 @@ ll get_prime_count(ll n) {
         ll end = min(sq, n / p2);
         for (ll i = 1; i <= end; i++) {
             ll d = i * p;
-            if (d <= sq) {
-                la[i] -= la[d] - p_cnt;
-            } else {
-                la[i] -= sm[n / d] - p_cnt;
-            }
+            if (d <= sq) la[i] -= la[d] - p_cnt;
+            else la[i] -= sm[n / d] - p_cnt;
         }
         for (ll i = sq; i >= p2; i--) {
             sm[i] -= sm[i / p] - p_cnt;
