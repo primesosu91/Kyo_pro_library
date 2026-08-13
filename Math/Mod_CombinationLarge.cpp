@@ -11,14 +11,15 @@
 using namespace std;
 using ll = long long;
 
-template <class T, ll primitive_root = 3>
-struct Mod_CombinationLarge {
+template <typename T = ll, ll primitive_root = 3>
+struct ModCombinationLarge {
 private:
     ll v;
-    vector<T> fact_table, invFact;
+    vector<T> fact_table;
+    vector<T> inv_fact_table;
     mutable vector<ll> rev;
 
-    // NTT (Number Theoretic Transform)
+    // NTT (数論変換) を実行する
     void ntt(vector<T>& a, bool invert) const {
         ll n = a.size();
         ll mod = T(0).mod();
@@ -51,35 +52,37 @@ private:
         }
     }
 
-    // 多項式の乗算
+    // NTTを用いた多項式の乗算
     vector<T> convolution(vector<T> a, vector<T> b) const {
         ll n = 1, sz = a.size() + b.size() - 1;
         while (n < sz) n <<= 1;
-        a.resize(n, T(0)); b.resize(n, T(0));
-        ntt(a, false); ntt(b, false);
+        a.resize(n, T(0));
+        b.resize(n, T(0));
+        ntt(a, false);
+        ntt(b, false);
         for (ll i = 0; i < n; i++) a[i] *= b[i];
         ntt(a, true);
         a.resize(sz);
         return a;
     }
 
-    // 多項式のシフト
+    // 多項式のシフト (g(x) から g(x + m) を計算)
     vector<T> shift(const vector<T>& g, T m) const {
         ll d = g.size() - 1;
         vector<T> res(d + 1);
+        vector<T> a_vec(d + 1), b_vec(2 * d + 1);
         
-        vector<T> A(d + 1), B(2 * d + 1);
         for (ll i = 0; i <= d; i++) {
-            A[i] = g[i] * invFact[i] * invFact[d - i];
-            if ((d - i) % 2 != 0) A[i] = -A[i];
+            a_vec[i] = g[i] * inv_fact_table[i] * inv_fact_table[d - i];
+            if ((d - i) % 2 != 0) a_vec[i] = -a_vec[i];
         }
         for (ll i = 0; i <= 2 * d; i++) {
             T val = m + T(i - d);
-            if (val.val() == 0) B[i] = 1; 
-            else B[i] = val.inv();
+            if (val.val() == 0) b_vec[i] = 1; 
+            else b_vec[i] = val.inv();
         }
         
-        vector<T> C = convolution(A, B);
+        vector<T> c_vec = convolution(a_vec, b_vec);
         
         T prod = 1;
         for (ll j = 0; j <= d; j++) {
@@ -91,7 +94,7 @@ private:
             if (val_idx <= d) {
                 res[k] = g[val_idx]; 
             } else {
-                res[k] = C[k + d] * prod;
+                res[k] = c_vec[k + d] * prod;
             }
             
             T den = m + T(k - d);
@@ -109,17 +112,17 @@ private:
 
 public:
     // コンストラクタ (O(√MOD log MOD) の前計算を実行)
-    Mod_CombinationLarge() {
+    ModCombinationLarge() {
         ll mod = T(0).mod();
         v = 1;
         while (v * v < mod) v *= 2;
         
-        invFact.assign(v + 1, T(0));
-        invFact[0] = 1;
+        inv_fact_table.assign(v + 1, T(0));
+        inv_fact_table[0] = 1;
         T fact_v = 1;
         for (ll i = 1; i <= v; i++) fact_v *= T(i);
-        invFact[v] = fact_v.inv();
-        for (ll i = v - 1; i >= 1; i--) invFact[i] = invFact[i + 1] * T(i + 1);
+        inv_fact_table[v] = fact_v.inv();
+        for (ll i = v - 1; i >= 1; i--) inv_fact_table[i] = inv_fact_table[i + 1] * T(i + 1);
         
         vector<T> g = {T(1), T(v + 1)};
         ll d = 1;
@@ -128,18 +131,18 @@ public:
             vector<T> g2 = shift(g, T(d) * T(v).inv());
             vector<T> g3 = shift(g, T(d) * T(v).inv() + T(d + 1));
             
-            vector<T> P_all(2 * d + 1);
-            vector<T> P_shift_all(2 * d + 1);
+            vector<T> p_all(2 * d + 1);
+            vector<T> p_shift_all(2 * d + 1);
             
-            for (ll i = 0; i <= d; i++) P_all[i] = g[i];
-            for (ll i = d + 1; i <= 2 * d; i++) P_all[i] = g1[i - d - 1];
+            for (ll i = 0; i <= d; i++) p_all[i] = g[i];
+            for (ll i = d + 1; i <= 2 * d; i++) p_all[i] = g1[i - d - 1];
             
-            for (ll i = 0; i <= d; i++) P_shift_all[i] = g2[i];
-            for (ll i = d + 1; i <= 2 * d; i++) P_shift_all[i] = g3[i - d - 1];
+            for (ll i = 0; i <= d; i++) p_shift_all[i] = g2[i];
+            for (ll i = d + 1; i <= 2 * d; i++) p_shift_all[i] = g3[i - d - 1];
             
             vector<T> next_g(2 * d + 1);
             for (ll i = 0; i <= 2 * d; i++) {
-                next_g[i] = P_all[i] * P_shift_all[i];
+                next_g[i] = p_all[i] * p_shift_all[i];
             }
             g = next_g;
             d *= 2;
@@ -188,22 +191,22 @@ public:
     }
 
     // 組合せ nCr
-    T nCr(ll n, ll r) const {
+    T ncr(ll n, ll r) const {
         if (n < r || r < 0) return 0;
         return fact(n) * inv_fact(r) * inv_fact(n - r);
     }
 
     // 順列 nPr
-    T nPr(ll n, ll r) const {
+    T npr(ll n, ll r) const {
         if (n < r || r < 0) return 0;
         return fact(n) * inv_fact(n - r);
     }
 
     // 重複組合せ nHr
-    T nHr(ll n, ll r) const {
+    T nhr(ll n, ll r) const {
         if (n == 0 && r == 0) return 1;
         if (n == 0 || r < 0) return 0;
-        return nCr(n + r - 1, r);
+        return ncr(n + r - 1, r);
     }
 
     // 多項係数
