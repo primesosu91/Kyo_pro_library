@@ -11,7 +11,7 @@
 using namespace std;
 using ll = long long;
 
-template <class Cap = ll>
+template <typename Cap = ll>
 struct MaxFlow {
     struct _Edge {
         ll to;
@@ -34,15 +34,18 @@ struct MaxFlow {
 
     MaxFlow(ll n) : n(n), g(n), level(n), iter(n) {}
 
-    // 辺の追加
+    // 辺の追加 (戻り値は追加された辺のID)
     ll add_edge(ll from, ll to, Cap cap) {
         ll m = pos.size();
         pos.push_back({from, (ll)g[from].size()});
+        
         ll from_id = g[from].size();
         ll to_id = g[to].size();
         if (from == to) to_id++;
+        
         g[from].push_back({to, cap, to_id});
         g[to].push_back({from, 0, from_id});
+        
         return m;
     }
 
@@ -52,6 +55,7 @@ struct MaxFlow {
         level[s] = 0;
         queue<ll> q;
         q.push(s);
+        
         while (!q.empty()) {
             ll v = q.front();
             q.pop();
@@ -69,6 +73,7 @@ struct MaxFlow {
         if (v == t) return up;
         Cap res = 0;
         ll level_v = level[v];
+        
         for (ll& i = iter[v]; i < (ll)g[v].size(); i++) {
             _Edge& e = g[v][i];
             if (level_v < level[e.to] && e.cap > 0) {
@@ -84,19 +89,22 @@ struct MaxFlow {
         return res;
     }
 
-    // 始点 s から終点 t への最大流を計算
-    Cap build(ll s, ll t) {
+    // 始点 s から終点 t への最大流を計算 (flow_limit で流量の上限を指定可能)
+    Cap flow(ll s, ll t, Cap flow_limit = numeric_limits<Cap>::max()) {
         Cap flow = 0;
-        while (true) {
+        while (flow < flow_limit) {
             bfs(s);
             if (level[t] < 0) return flow;
+            
             fill(iter.begin(), iter.end(), 0);
-            Cap f = dfs(s, t, numeric_limits<Cap>::max());
+            Cap f = dfs(s, t, flow_limit - flow);
             while (f > 0) {
                 flow += f;
-                f = dfs(s, t, numeric_limits<Cap>::max());
+                if (flow == flow_limit) return flow;
+                f = dfs(s, t, flow_limit - flow);
             }
         }
+        return flow;
     }
 
     // i番目に追加した辺の情報を取得
@@ -107,7 +115,7 @@ struct MaxFlow {
     }
 
     // 全ての辺の情報を取得
-    vector<Edge> get_edges() {
+    vector<Edge> edges() {
         ll m = pos.size();
         vector<Edge> res(m);
         for (ll i = 0; i < m; i++) {
@@ -117,11 +125,12 @@ struct MaxFlow {
     }
 
     // 始点 s から到達可能な頂点を取得（最小カットのS側）
-    vector<bool> get(ll s) {
+    vector<bool> min_cut(ll s) {
         vector<bool> visited(n, false);
         queue<ll> q;
         q.push(s);
         visited[s] = true;
+        
         while (!q.empty()) {
             ll v = q.front();
             q.pop();
