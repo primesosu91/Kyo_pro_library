@@ -11,35 +11,44 @@
 using namespace std;
 using ll = long long;
 
-template <class Cap = ll>
+template <typename Cap = ll>
 struct ProjectSelection {
+    // 内部用の辺構造体
     struct _Edge {
         ll to;
         Cap cap;
         ll rev;
     };
 
-    ll n, S, T;
+    ll n;
+    ll s;
+    ll t;
     Cap base_profit;
     vector<vector<_Edge>> g;
-    vector<ll> level, iter;
+    vector<ll> level;
+    vector<ll> iter;
 
     // 初期化 (n: 要素数)
-    ProjectSelection(ll n) : n(n), S(n), T(n + 1), base_profit(0), g(n + 2), level(n + 2), iter(n + 2) {}
+    ProjectSelection(ll n) : n(n), s(n), t(n + 1), base_profit(0), g(n + 2), level(n + 2), iter(n + 2) {}
 
     // 内部用の辺追加関数
     void _add_edge(ll from, ll to, Cap cap) {
-        if (cap == 0) return;
+        if (cap == 0) {
+            return;
+        }
         ll from_id = g[from].size();
         ll to_id = g[to].size();
-        if (from == to) to_id++;
+        if (from == to) {
+            to_id++;
+        }
         g[from].push_back({to, cap, to_id});
         g[to].push_back({from, 0, from_id});
     }
 
+    // 内部用のコスト追加関数
     void _add_cost_internal(ll v, Cap cost0, Cap cost1) {
-        _add_edge(S, v, cost1);
-        _add_edge(v, T, cost0);
+        _add_edge(s, v, cost1);
+        _add_edge(v, t, cost0);
     }
 
     // 要素 v が 0 または 1 を選んだときの「利益」を追加（正負どちらも可）
@@ -57,18 +66,17 @@ struct ProjectSelection {
     }
 
     // 要素 u が 0 かつ 要素 v が 1 の場合に発生するコスト（ペナルティ）を追加
-    // ※ 2変数間の負のペナルティは劣モジュラ性を満たさず最大流で解けないためアサーションで弾く
     void add_penalty(ll u, ll v, Cap cost) {
         assert(cost >= 0);
         _add_edge(u, v, cost);
     }
 
     // 残余グラフ上で始点からの距離を計算
-    void bfs(ll s) {
+    void _bfs(ll start) {
         fill(level.begin(), level.end(), -1);
-        level[s] = 0;
+        level[start] = 0;
         queue<ll> q;
-        q.push(s);
+        q.push(start);
         while (!q.empty()) {
             ll v = q.front();
             q.pop();
@@ -82,19 +90,23 @@ struct ProjectSelection {
     }
 
     // 増加パスを探索してフローを流す
-    Cap dfs(ll v, ll t, Cap up) {
-        if (v == t) return up;
+    Cap _dfs(ll v, ll end, Cap up) {
+        if (v == end) {
+            return up;
+        }
         Cap res = 0;
         ll level_v = level[v];
         for (ll& i = iter[v]; i < (ll)g[v].size(); i++) {
             _Edge& e = g[v][i];
             if (level_v < level[e.to] && e.cap > 0) {
-                Cap d = dfs(e.to, t, min(up - res, e.cap));
+                Cap d = _dfs(e.to, end, min(up - res, e.cap));
                 if (d > 0) {
                     e.cap -= d;
                     g[e.to][e.rev].cap += d;
                     res += d;
-                    if (res == up) return res;
+                    if (res == up) {
+                        return res;
+                    }
                 }
             }
         }
@@ -105,13 +117,15 @@ struct ProjectSelection {
     Cap build() {
         Cap flow = 0;
         while (true) {
-            bfs(S);
-            if (level[T] < 0) return base_profit - flow;
+            _bfs(s);
+            if (level[t] < 0) {
+                return base_profit - flow;
+            }
             fill(iter.begin(), iter.end(), 0);
-            Cap f = dfs(S, T, numeric_limits<Cap>::max());
+            Cap f = _dfs(s, t, numeric_limits<Cap>::max());
             while (f > 0) {
                 flow += f;
-                f = dfs(S, T, numeric_limits<Cap>::max());
+                f = _dfs(s, t, numeric_limits<Cap>::max());
             }
         }
     }
