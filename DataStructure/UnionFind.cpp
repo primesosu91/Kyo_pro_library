@@ -21,11 +21,12 @@ struct UnionFind {
     // 現在のグループ数（連結成分の個数）
     ll group_count;
 
-    UnionFind(ll n) {
+    UnionFind(ll n = 0) {
         par.assign(n, -1);
         group_count = n;
     }
 
+    // xが属する木の根を返す
     ll root(ll x) {
         if (par[x] < 0) {
             return x;
@@ -35,10 +36,12 @@ struct UnionFind {
         return par[x] = root(par[x]);
     }
 
+    // xとyが同じグループに属しているかを判定
     bool same(ll x, ll y) {
         return root(x) == root(y);
     }
 
+    // xとyのグループを併合する
     bool unite(ll x, ll y) {
         ll rx = root(x);
         ll ry = root(y);
@@ -59,14 +62,17 @@ struct UnionFind {
         return true;
     }
 
+    // xが属するグループの要素数を返す
     ll size(ll x) {
         return -par[root(x)];
     }
 
+    // 全体のグループ数（連結成分の個数）を返す
     ll count() {
         return group_count;
     }
 
+    // 各グループの要素をまとめたリスト（2次元配列）を返す
     vector<vector<ll>> groups() {
         ll n = par.size();
         vector<vector<ll>> res(n);
