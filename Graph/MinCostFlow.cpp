@@ -10,8 +10,9 @@
 using namespace std;
 using ll = long long;
 
-template <class Cap = ll, class Cost = ll>
+template<typename Cap = ll, typename Cost = ll>
 struct MinCostFlow {
+    // グラフ内部で保持する辺の構造体
     struct _Edge {
         ll to;
         Cap cap;
@@ -19,6 +20,7 @@ struct MinCostFlow {
         ll rev;
     };
 
+    // 外部から辺の情報を取得するための構造体
     struct Edge {
         ll from;
         ll to;
@@ -31,9 +33,10 @@ struct MinCostFlow {
     vector<pair<ll, ll>> pos;
     vector<vector<_Edge>> g;
 
+    // 頂点数 n で初期化
     MinCostFlow(ll n) : n(n), g(n) {}
 
-    // 辺の追加
+    // from から to へ 容量 cap、費用 cost の有向辺を追加 (戻り値は追加した辺のインデックス)
     ll add_edge(ll from, ll to, Cap cap, Cost cost) {
         ll m = pos.size();
         pos.push_back({from, (ll)g[from].size()});
@@ -45,7 +48,7 @@ struct MinCostFlow {
         return m;
     }
 
-    // 流量 flow_limit までの流量と費用の変化点（折れ線）を取得
+    // s から t へ流量 flow_limit までの流量と費用の変化点（折れ線）を取得
     vector<pair<Cap, Cost>> slope(ll s, ll t, Cap flow_limit) {
         vector<pair<Cap, Cost>> result;
         result.push_back({0, 0});
@@ -59,7 +62,7 @@ struct MinCostFlow {
             fill(pre.begin(), pre.end(), -1);
             fill(pre_edge.begin(), pre_edge.end(), -1);
 
-            // ポテンシャル付きダイクストラ法
+            // ポテンシャル付きダイクストラ法による最短路探索
             priority_queue<pair<Cost, ll>, vector<pair<Cost, ll>>, greater<pair<Cost, ll>>> pq;
             dist[s] = 0;
             pq.push({0, s});
@@ -77,25 +80,33 @@ struct MinCostFlow {
                     }
                 }
             }
+            // s から t への経路が見つからなければ終了
             if (dist[t] == numeric_limits<Cost>::max()) break;
 
+            // ポテンシャルの更新
             for (ll v = 0; v < n; v++) {
                 if (dist[v] != numeric_limits<Cost>::max()) dual[v] += dist[v];
             }
 
+            // 流せる量を計算
             Cap d = flow_limit - flow;
             for (ll v = t; v != s; v = pre[v]) {
                 d = min(d, g[pre[v]][pre_edge[v]].cap);
             }
+            
+            // グラフの容量を更新
             for (ll v = t; v != s; v = pre[v]) {
                 auto& e = g[pre[v]][pre_edge[v]];
                 e.cap -= d;
                 g[v][e.rev].cap += d;
             }
 
+            // 流量と費用の更新
             Cost d_cost = dual[t];
             flow += d;
             cost += d * d_cost;
+            
+            // 直前と同じ傾きの場合は末尾を削除して更新
             if (prev_cost_per_flow == d_cost) {
                 result.pop_back();
             }
@@ -105,19 +116,19 @@ struct MinCostFlow {
         return result;
     }
 
-    // 流せるだけ流した場合の流量と費用の変化点を取得
+    // s から t へ流せるだけ流した場合の流量と費用の変化点を取得
     vector<pair<Cap, Cost>> slope(ll s, ll t) {
         return slope(s, t, numeric_limits<Cap>::max());
     }
 
-    // 流量 flow を流す際の最小費用（不可能なら -1）
+    // s から t へ流量 flow を流す際の最小費用を計算（不可能なら -1 を返す）
     Cost build(ll s, ll t, Cap flow) {
         auto res = slope(s, t, flow);
         if (res.back().first < flow) return -1;
         return res.back().second;
     }
 
-    // 流せるだけ流した場合の最大流量と最小費用
+    // s から t へ流せるだけ流した場合の最大流量とその際の最小費用を計算
     pair<Cap, Cost> build(ll s, ll t) {
         auto res = slope(s, t);
         return res.back();
@@ -130,7 +141,7 @@ struct MinCostFlow {
         return Edge{pos[i].first, _e.to, _e.cap + _re.cap, _re.cap, _e.cost};
     }
 
-    // 全ての辺の情報を取得
+    // 追加された全ての辺の情報を取得
     vector<Edge> get_edges() {
         ll m = pos.size();
         vector<Edge> res(m);
