@@ -28,10 +28,18 @@ struct SegmentTree {
     SegmentTree(const vector<T>& v) {
         n = v.size();
         size = 1;
-        while (size < n) size *= 2;
+        while (size < n) {
+            size *= 2;
+        }
+        
         d.assign(2 * size, e());
-        for (ll i = 0; i < n; i++) d[size + i] = v[i];
-        for (ll i = size - 1; i >= 1; i--) update_node(i);
+        for (ll i = 0; i < n; i++) {
+            d[size + i] = v[i];
+        }
+        
+        for (ll i = size - 1; i >= 1; i--) {
+            update_node(i);
+        }
     }
 
     // 位置 p の値を x に更新 (0-indexed)
@@ -59,12 +67,14 @@ struct SegmentTree {
         T sml = e(), smr = e();
         l += size;
         r += size;
+        
         while (l < r) {
             if (l % 2 == 1) sml = op(sml, d[l++]);
             if (r % 2 == 1) smr = op(d[--r], smr);
             l /= 2;
             r /= 2;
         }
+        
         return op(sml, smr);
     }
 
@@ -79,6 +89,7 @@ struct SegmentTree {
         if (l == n) return n;
         l += size;
         T sm = e();
+        
         do {
             while (l % 2 == 0) l /= 2;
             if (!f(op(sm, d[l]))) {
@@ -94,6 +105,7 @@ struct SegmentTree {
             sm = op(sm, d[l]);
             l++;
         } while ((l & -l) != l);
+        
         return n;
     }
 
@@ -103,6 +115,7 @@ struct SegmentTree {
         if (r == 0) return 0;
         r += size;
         T sm = e();
+        
         do {
             r--;
             while (r > 1 && (r % 2)) r /= 2;
@@ -118,6 +131,7 @@ struct SegmentTree {
             }
             sm = op(d[r], sm);
         } while ((r & -r) != r);
+        
         return 0;
     }
 };
