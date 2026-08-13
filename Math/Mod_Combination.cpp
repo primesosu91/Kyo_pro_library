@@ -11,7 +11,7 @@
 using namespace std;
 using ll = long long;
 
-template <typename T = ll>
+template<typename T = ll>
 struct ModCombination {
     vector<T> _fact;
     vector<T> _inv_fact;
@@ -48,7 +48,7 @@ struct ModCombination {
         return _inv_fact[n];
     }
 
-    // 組合せ nCr を返す (計算量: O(1))
+    // 組合せ nCr を返す
     T nCr(ll n, ll r) const {
         if (n < 0 || r < 0 || n < r) {
             return 0;
@@ -56,7 +56,7 @@ struct ModCombination {
         return _fact[n] * _inv_fact[r] * _inv_fact[n - r];
     }
 
-    // nが巨大でrが小さい場合の組合せ nCr を返す (計算量: O(r))
+    // nが巨大でrが小さい場合の組合せ nCr を返す
     T nCr_large_n(ll n, ll r) const {
         if (n < 0 || r < 0 || n < r) {
             return 0;
@@ -75,7 +75,7 @@ struct ModCombination {
         return res * _inv_fact[r];
     }
 
-    // 順列 nPr を返す (計算量: O(1))
+    // 順列 nPr を返す
     T nPr(ll n, ll r) const {
         if (n < 0 || r < 0 || n < r) {
             return 0;
@@ -83,7 +83,7 @@ struct ModCombination {
         return _fact[n] * _inv_fact[n - r];
     }
 
-    // 重複組合せ nHr を返す (計算量: O(1))
+    // 重複組合せ nHr を返す
     T nHr(ll n, ll r) const {
         if (n < 0 || r < 0) {
             return 0;
