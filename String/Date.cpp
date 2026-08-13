@@ -19,6 +19,9 @@ struct Date {
     ll y, m, d;
     ll days;
 
+    // デフォルトコンストラクタ (1年1月1日を基準とする)
+    Date() : y(1), m(1), d(1), days(0) {}
+
     // (y, m, d) を通算日数に変換 (1年1月1日を 0 とする)
     static ll to_days(ll y, ll m, ll d) {
         if (m <= 2) {
@@ -33,14 +36,18 @@ struct Date {
         ll z = days + 306;
         ll quad = z / 146097;
         z %= 146097;
+        
         ll cent = z / 36524;
         if (cent == 4) cent = 3;
         z -= cent * 36524;
+        
         ll quad_year = z / 1461;
         z %= 1461;
+        
         ll year = z / 365;
         if (year == 4) year = 3;
         z -= year * 365;
+        
         y = quad * 400 + cent * 100 + quad_year * 4 + year;
         m = (z * 5 + 2) / 153;
         d = z - (m * 153 + 2) / 5 + 1;
@@ -83,23 +90,42 @@ struct Date {
     }
 
     // d_days 日後の日付を取得
-    Date add(ll d_days) const { return Date(days + d_days); }
+    Date add(ll d_days) const {
+        return Date(days + d_days);
+    }
     
     // 翌日の日付を取得
-    Date next() const { return Date(days + 1); }
+    Date next() const {
+        return Date(days + 1);
+    }
     
     // 前日の日付を取得
-    Date prev() const { return Date(days - 1); }
+    Date prev() const {
+        return Date(days - 1);
+    }
     
-    Date operator+(ll d_days) const { return add(d_days); }
-    Date operator-(ll d_days) const { return add(-d_days); }
+    // 経過日数の加算・減算
+    Date operator+(ll d_days) const {
+        return add(d_days);
+    }
+    
+    Date operator-(ll d_days) const {
+        return add(-d_days);
+    }
 
     // 対象日付 t との日数差 (this - t) を取得
-    ll diff(const Date& t) const { return days - t.days; }
-    ll operator-(const Date& t) const { return diff(t); }
+    ll diff(const Date& t) const {
+        return days - t.days;
+    }
+    
+    ll operator-(const Date& t) const {
+        return diff(t);
+    }
 
     // 曜日を取得 (0: 日, 1: 月, ..., 6: 土)
-    ll day_of_week() const { return ((days + 1) % 7 + 7) % 7; }
+    ll day_of_week() const {
+        return ((days + 1) % 7 + 7) % 7;
+    }
     
     // 曜日の文字列を取得
     string day_of_week_str() const {
